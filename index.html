@@ -1,0 +1,88 @@
+<html>
+  <head>
+    <meta charset=utf-8>
+    <title>Test Pixi</title>
+    <style>
+      canvas { background-color: #222222; }
+    </style>
+    <script src='./pixi.dev.js'></script>
+  </head>
+  <body onload='init();'>
+    <div align='center'>
+      <canvas id='game-canvas' width='512' height='384'></canvas>
+    </div>
+  </body>
+  <script>
+    
+    function init(){
+      stage = new PIXI.Stage(0x66FF99);
+      var width = document.getElementById('game-canvas').width;
+      var height = document.getElementById('game-canvas').height;
+      renderer = PIXI.autoDetectRenderer(width, height, document.getElementById('game-canvas'));
+
+      //var farTexture = PIXI.Texture.fromImage('images/bg-far.png');
+      //far = new PIXI.Sprite(farTexture);
+      //far = new PIXI.TilingSprite(farTexture, 512, 384);
+      //far = new PixiImg('images/bg-far.png', 512, 384);
+      //stage.addChild(far);
+
+      //var midTexture = PIXI.Texture.fromImage('images/bg-mid.png');
+      //mid = new PIXI.Sprite(midTexture);
+      //mid = new PixiImg('images/bg-mid.png', 512, 684);
+      //stage.addChild(mid);
+
+      //renderer.render(stage);
+      scroller = new Scroller(stage);
+      requestAnimFrame(update);
+    }
+
+    function Scroller(stage){
+      var far_image = 'images/bg-far.png';
+      var mid_image = 'images/bg-mid.png';
+      var width = 512;
+      var height = 384;
+      this.far = new PixiImg(far_image,width,height);
+      stage.addChild(this.far);
+
+      this.mid = new PixiImg(mid_image,width,height);
+      stage.addChild(this.mid);
+    }
+    Scroller.prototype.update = function(){
+      this.far.update_x();
+      this.mid.update_y();
+    }
+    //Scroller.prototype.setViewport = function(viewport){
+    //  this.far.setViewport_x(viewport);
+    //  this.mid.setViewport_y(viewport);
+    //}
+
+    function update(){
+      //far.position.x -= 1.128;
+      //far.tilePosition.x -= 2.128;
+      //mid.tilePosition.y -= 1.64;
+      //far.update_x();
+      //mid.update_y();
+      scroller.update();
+      renderer.render(stage);
+      requestAnimFrame(update);
+    }
+
+    function PixiImg(image_url, width, height){
+      var texture = PIXI.Texture.fromImage(image_url);
+      PIXI.TilingSprite.call(this, texture, width, height);
+      this.position.x = 0;
+      this.position.y = 0;
+      this.tilePosition.x = 0;
+      this.tilePosition.y = 0;
+    }
+    PixiImg.constructor = PixiImg;
+    PixiImg.prototype = Object.create(PIXI.TilingSprite.prototype);
+
+    PixiImg.prototype.update_x = function(){
+      this.tilePosition.x -= 2.128;
+    }
+    PixiImg.prototype.update_y = function(){
+      this.tilePosition.y -= 1.64;
+    }
+  </script>
+</html>
