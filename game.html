@@ -1,0 +1,364 @@
+<html>
+  <head>
+    <meta charset=utf-8>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Jump Game</title>
+    <style>
+      canvas { background-color: #010069; }
+      body {padding:0;margin: 0;}
+    </style>
+    <script src='./pixi.dev.js'></script>
+  </head>
+  <body onload='init();'>
+    <div align='center'>
+      <canvas id='game-canvas' onclick='start_game();'></canvas><br>
+    </div>
+  </body>
+  <script>
+    var start = true;
+    var bgcolor = '0xFFFFFF'; //'0x000099';
+    var width;
+    width = window.innerWidth;
+    if(window.innerWidth >= 512){
+      width = 512;
+    }
+    //var height = window.innerHeight * 2 / 3;
+    var height = 400;
+    var speed_x = 0.2;
+    var speed_2x = 1;
+    var speed_3x = 2;
+    var speed_y = 0;
+    var rotate = 0.05;
+    var power_arrow_flag = false;
+    var length_arrow_flag = true;
+    var jumper_flag = false;
+    var power_arrow_speed = 10;
+    var pendule_speed = 0.1;
+    // 判断是否是移动设备
+    var agent_info = navigator.userAgent;
+    var Agents = new Array('Android', 'iPhone', 'iPad', 'iPod', 'Windows Phone', 'SymbianOs');
+    for(var i=0;i<Agents.length;i++){
+      if(agent_info.indexOf(Agents[i]) > 0){
+        power_arrow_speed = 5.8;
+        pendule_speed = 0.062;
+      }
+    }
+
+    var up_height = -10;
+    var low_height = 240;
+    var onclick_time = 0;
+    var touch_time = 0;
+    var res_record;
+
+    var jump_x = 0;
+    var jump_y = 0;
+    var jumper_positionx = 80;
+    var jumper_positiony = 260;
+    var arrow_positionx = 32;
+    var arrow_positiony = 380;
+    var distence = 0;
+
+    var gamebg_image = 'images/gamebg.png';
+    var bgmount_image = 'images/bgmt.png';
+    var bgmoon_image = 'images/bgmn.png';
+    var lakers_image = 'images/lakers.png';
+    var lakerbg_image = 'images/lakerbg.png';
+    var start_image = 'images/start.png';
+    var standby_image = 'images/standby.png';
+    var standup_image = 'images/standup.png';
+    var readyjump_image = 'images/ready_jump.png';
+    var jump_image = 'images/jumper.png';
+    var water_image = 'images/water.png';
+    var arrow_image = 'images/arrow.png';
+    var power_image = 'images/power.png';
+    var power_arrow_image = 'images/power_arrow.png';
+    var scord_image = 'images/scord.png';
+    var retry_image = 'images/retry.png';
+    var maopao_image = 'images/maopao.png';
+    var share_image = 'images/share.png';
+
+    var gamebgTexture = PIXI.Texture.fromImage(gamebg_image);
+    var bgmoonTexture = PIXI.Texture.fromImage(bgmoon_image);
+    var bgmountTexture = PIXI.Texture.fromImage(bgmount_image);
+    var lakersTexture = PIXI.Texture.fromImage(lakers_image);
+    var lakerbgTexture = PIXI.Texture.fromImage(lakerbg_image);
+    var standbyTexture = PIXI.Texture.fromImage(standby_image);
+    var standupTexture = PIXI.Texture.fromImage(standup_image);
+    var readyjumpTexture = PIXI.Texture.fromImage(readyjump_image);
+    var jumpTexture = PIXI.Texture.fromImage(jump_image);
+    var waterTexture = PIXI.Texture.fromImage(water_image);
+    var penduleTexture = PIXI.Texture.fromImage(arrow_image);
+    var powerTexture = PIXI.Texture.fromImage(power_image);
+    var powerarrowTexture = PIXI.Texture.fromImage(power_arrow_image);
+    var startTexture = PIXI.Texture.fromImage(start_image);
+    var retryTexture = PIXI.Texture.fromImage(retry_image);
+    var scordTexture = PIXI.Texture.fromImage(scord_image);
+    var maopaoTexture = PIXI.Texture.fromImage(maopao_image);
+    var shareTexture = PIXI.Texture.fromImage(share_image);
+
+    var gamebg = new PIXI.Sprite(gamebgTexture);
+    gamebg.position.x = 0;
+    gamebg.position.y = 0;
+
+    var bgmoon = new PIXI.Sprite(bgmoonTexture);
+    bgmoon.position.x = width - 300;
+    bgmoon.position.y = 40;
+
+    var bgmount = new PIXI.Sprite(bgmountTexture);
+    bgmount.position.x = 0;
+    bgmount.position.y = 160;
+
+    var maopao = new PIXI.Sprite(maopaoTexture);
+    maopao.position.x = 80;
+    maopao.position.y = 260;
+
+    var standby = new PIXI.Sprite(standupTexture);
+    standby.position.x = jumper_positionx;
+    standby.position.y = jumper_positiony;
+
+    var readyjump = new PIXI.Sprite(readyjumpTexture);
+    readyjump.position.x = jumper_positionx;  // 80
+    readyjump.position.y = jumper_positiony; // 240
+
+    var lakers = new PIXI.Sprite(lakersTexture);
+    lakers.position.x = 0;
+    lakers.position.y = 266;
+
+    var lakerbg = new PIXI.Sprite(lakerbgTexture);
+    lakerbg.position.x = 0; //395;
+    lakerbg.position.y = 0; //276;
+
+    var power = new PIXI.Sprite(powerTexture);
+    power.position.x = 30;
+    power.position.y = 180;
+
+    var power_arrow = new PIXI.Sprite(powerarrowTexture);
+    power_arrow.position.x = arrow_positionx; // 12
+    power_arrow.position.y = arrow_positiony; //180-380
+
+    var pendule = new PIXI.Sprite(penduleTexture);
+    pendule.position.x = 110;
+    pendule.position.y = 320;
+    pendule.anchor.x = -1;
+    pendule.anchor.y = 0.5;
+
+    var start_button = new PIXI.Sprite(startTexture);
+    start_button.position.x = width - 160;
+    start_button.position.y = height - 70;
+
+    var scord = new PIXI.Sprite(scordTexture);
+    scord.position.x = width - 180;
+    scord.position.y = 54;
+
+    var share = new PIXI.Sprite(shareTexture);
+    share.position.x = width - 140;
+    share.position.y = 5;
+
+    var text = new PIXI.Text('');
+    text.setStyle({font:"30px Arial", fill:"black", align:"center"});
+    text.width = 360;
+    text.height = 160;
+    text.position.x = width - 168;
+    text.position.y = 62;
+
+    var lakerbg_move = new PIXI.TilingSprite(lakerbgTexture, 
+                                             width,
+                                             height);
+                                             //lakerbgTexture.baseTexture.height + 30);  // 循环的视图大小
+    lakerbg_move.position.x = 0;
+    lakerbg_move.position.y = 0; //276; // 循环位置
+    lakerbg_move.tilePosition.x = 0; 
+    lakerbg_move.tilePosition.y = 0;
+
+    var mount_move = new PIXI.TilingSprite(bgmountTexture, 
+                                          width,
+                                          bgmountTexture.baseTexture.height + 30);
+    mount_move.position.x = 0;
+    mount_move.position.y = 160;
+    mount_move.tilePosition.x = 0;
+    mount_move.tilePosition.y = 0;
+
+    var stage = new PIXI.Stage(bgcolor);
+    var canvas = document.getElementById('game-canvas');
+    canvas.width = width;
+    canvas.height = height;
+    var renderer = new PIXI.autoDetectRenderer(width, height, canvas);
+
+    function set_height(){
+      standby.setTexture(standbyTexture);
+      stage.addChild(power);
+      stage.addChild(power_arrow);
+      renderer.render(stage);
+      requestAnimFrame(power_arrow_move);
+    }
+
+    function power_arrow_move(){
+      if(onclick_time == 1 || touch_time == 1){
+        if(power_arrow.position.y < 180){
+          power_arrow_flag = true;
+        }else if(power_arrow.position.y > 360){
+          power_arrow_flag = false;
+        }
+        if(power_arrow_flag){
+          power_arrow.position.y += power_arrow_speed;
+        }else{
+          power_arrow.position.y -= power_arrow_speed;
+        }
+        jump_x = 370 - power_arrow.position.y;
+        renderer.render(stage);
+        requestAnimFrame(power_arrow_move);
+      }
+    }
+
+    function set_length(){
+      standby.setTexture(readyjumpTexture);
+      stage.addChild(pendule);
+      renderer.render(stage);
+      requestAnimFrame(length_move);
+    }
+
+    function length_move(){
+      if(onclick_time == 2 || touch_time == 2){
+        if(pendule.rotation <= -1.7){
+          length_arrow_flag = false;
+        }else if(pendule.rotation >= 0){
+          length_arrow_flag = true;
+        }
+        if(length_arrow_flag){
+          pendule.rotation -= pendule_speed;
+        }else{
+          pendule.rotation += pendule_speed;
+        }
+        //jump_x = 2 + pendule.rotation; // 2 + .. 
+        renderer.render(stage);
+        requestAnimFrame(length_move);
+      }
+    }
+    
+    function jumper_move(){
+      res_record = parseInt(0 - distence / 4);
+      text.setText(res_record+' m');
+      stage.addChild(scord);
+      stage.addChild(text);
+      if(standby.position.y > jumper_positiony){
+        standby.rotation = 0;
+        standby.setTexture(waterTexture);
+        setTimeout(function(){
+          standby.setTexture(maopaoTexture);
+          renderer.render(stage);
+          },200)
+        stage.addChild(start_button);
+        stage.addChild(share);
+        start_button.setTexture(retryTexture);
+        renderer.render(stage);
+        onclick_time += 1;
+        touch_time += 1;
+      }else{
+        lakers.position.x -= speed_3x;
+        lakerbg_move.tilePosition.x -= speed_3x;
+        mount_move.tilePosition.x -= speed_2x;
+        bgmoon.position.x -= speed_x;
+        if(standby.position.y <= up_height){
+          jumper_flag = true;
+        }
+        var gy =(380 - power_arrow.position.y) / 6000;
+        sy += 0.06 - gy;
+        standby.rotation = (speed_y+sy) / 20;
+        standby.position.y += speed_y + sy;
+        distence = lakers.position.x;
+        renderer.render(stage);
+        requestAnimFrame(jumper_move);
+      }
+    }
+
+    function jump(){
+      stage.removeChild(power);
+      stage.removeChild(power_arrow);
+      stage.removeChild(pendule);
+      stage.removeChild(bgmount);
+      stage.removeChild(start_button);
+      standby.setTexture(jumpTexture);
+
+      speed_3x += jump_x / 20;
+      var ax = pendule.rotation + 1;  // 1.2 ~ 0.8角度是在0～-1.6 最高的角度可以设置在1.0附近 0.8是中间位置
+      ax *= ax;
+      ax = 3 - ax;
+      speed_y -= ax;
+      renderer.render(stage);
+
+      requestAnimFrame(jumper_move);
+    }
+
+    function init(){
+      onclick_time = 0;
+      touch_time = 0;
+      res_record = '';
+      power_arrow_flag = false;
+      length_arrow_flag = true;
+      jumper_flag = false;
+      sy = -2;
+      speed_y = 0; 
+      speed_3x = 2;
+      jump_x = 0;
+      distence = 0;
+      stage.removeAll();
+      lakers.position.x = 0;
+      stage.addChild(gamebg);
+      stage.addChild(bgmoon);
+      stage.addChild(bgmount);
+      stage.addChild(mount_move);
+      stage.addChild(lakerbg_move);
+      stage.addChild(lakers);
+      standby.setTexture(standupTexture);
+      stage.addChild(standby);
+      start_button.setTexture(startTexture);
+      stage.addChild(start_button);
+
+      power_arrow.position.y = arrow_positiony;
+      pendule.rotation = 0;
+      standby.position.x = jumper_positionx;
+      standby.position.y = jumper_positiony;
+      mount_move.tilePosition.x = 0;
+      bgmoon.position.x = width - 300;
+      renderer.render(stage);
+    }
+
+    function start_game(){
+      if(onclick_time == 0){
+        set_height();
+        onclick_time += 1;
+      }else if(onclick_time == 1){
+        set_length();
+        onclick_time += 1;
+      }else if(onclick_time == 2){
+        jump();
+        onclick_time += 1;
+      }else if(onclick_time == 4){
+        init();
+      }
+    }
+
+    function touchStart(){
+      if(touch_time == 0){
+        set_height();
+        touch_time += 1;
+      }else if(touch_time == 1){
+        set_length();
+        touch_time += 1;
+      }else if(touch_time == 2){
+        jump();
+        touch_time += 1;
+      }else if(touch_time == 4){
+        init();
+      }
+    }
+  
+    canvas.addEventListener('touchstart', touchStart, false);
+
+    PIXI.DisplayObjectContainer.prototype.removeAll = function(){
+      while(this.children[0]){
+        this.removeChild(this.children[0]);
+      }
+    }
+  </script>
+</html>
